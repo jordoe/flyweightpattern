@@ -1,0 +1,129 @@
+#include <iostream>
+#include<map> 
+#include <stdlib.h> /* rand */                     
+#include <time.h>   /* time */  
+using namespace std;
+
+//Autor: Jorge Domínguez Egea
+//Ingeniería de Videojuegos
+//Grado de Diseño y Desarrollo de Videojuegos, URJC
+
+//PATRON FLYWEIGHT
+
+const int WIDTH = 10;
+const int HEIGHT = 10;
+
+class Texture {                                                 //Texture corresponde con la clase Flyweight abstracta.
+    public:                                                     //La posición de cada textura es abstracta, por lo que forman parte de este método.       
+                                                                     
+        virtual void moveTexture(                                       
+            int previousLocationX, int previousLocationY ,              
+            int newLocationX     , int newLocationY) = 0;
+};
+
+class GrassTexture : public Texture {                                        //Ésta clase, al igual que las dos siguientes, son del tipo ConcreteFlyweight.
+    public:                                                                  //La única cualidad intrínseca que tienen cada una de ellas es el texto que indica
+        void moveTexture( int previousLocationX, int previousLocationY,      //qué tipo de textura se ha movido.
+                      int newLocationX     , int newLocationY) {
+                cout << "Hierba movida desde " <<  
+                previousLocationX << "," << previousLocationY <<
+                " a "<< newLocationX << "," << newLocationY << endl;  
+            }
+};
+
+class HillTexture : public Texture {
+    public:
+        void moveTexture( int previousLocationX, int previousLocationY,  
+                      int newLocationX     , int newLocationY) {
+                cout << "Colina movida desde " <<  
+                previousLocationX << "," << previousLocationY <<
+                " a "<< newLocationX << "," << newLocationY << endl;     
+            }
+};
+
+class WaterTexture : public Texture {
+    public:
+        void moveTexture( int previousLocationX, int previousLocationY,  
+                      int newLocationX     , int newLocationY) {
+                cout << "Agua movida desde " <<  
+                previousLocationX << "," << previousLocationY <<
+                " a "<< newLocationX << "," << newLocationY << endl; 
+            }
+};
+
+class TextureFactory {                                        //Ésta clase corresponde con la FlyweightFactory del diagrama.
+    private:                                                  //Crea un único objeto para cada tipo de textura.
+        map<string, Texture*> textures_;                      //Al igual que en el ejemplo de teoría del ejército clon, utiliza la estructura de datos "map",
+                                                              //que es una tabla Hash del STL de C++.
+    public:                                                   //Se utiliza un string para localizar la información.
+        Texture* GetTexture(string key) {                     //Lo que hace el "if" es lo siguiente:
+            Texture* newTexture = NULL;                       //Se busca si el nuevo Texture solicitado está en el map. Si lo está, se devuelve el puntero a 
+            if (textures_.find(key) != textures_.end()) {     //este objeto texture, si no lo está, se crea uno nuevo y después se devuelve el puntero a él.
+                newTexture = textures_[key];   
+            }else if (key.compare("Hierba") == 0) {
+                newTexture = new GrassTexture();
+                textures_[key] = newTexture;
+            }else if (key.compare("Colina") == 0) {
+                newTexture = new HillTexture();
+                textures_[key] = newTexture;
+            }else if (key.compare("Agua") == 0) {
+                newTexture = new WaterTexture();
+                textures_[key] = newTexture;
+            }else {
+                cout << "Not Implemented" << endl;   
+            }
+            return newTexture;
+        }
+};
+
+class TextureClient {                                        //TextureClient corresponde con el Client del diagrama.
+    private:                                                 //En esta clase, lo que se hace es actualizar el estado extrínseco de cada textura.
+        TextureFactory factory;                              //De esta forma, invoca al método "move" de cada "ConcreteFlyweight", actualizando la posición
+        Texture* grass = factory.GetTexture("Hierba");
+        Texture* hill = factory.GetTexture("Colina");
+        Texture* water = factory.GetTexture("Agua");
+        int currentLocationX = 0;
+        int currentLocationY = 0;
+    public:
+        void moveGrass(int newLocationX, int newLocationY){
+            grass->moveTexture(currentLocationX, currentLocationY,
+                                newLocationX, newLocationY);
+            currentLocationX = newLocationX;
+            currentLocationY = newLocationY;
+        }
+        void moveHill(int newLocationX, int newLocationY){
+            hill->moveTexture(currentLocationX, currentLocationY,
+                                newLocationX, newLocationY);
+            currentLocationX = newLocationX;
+            currentLocationY = newLocationY;
+        }
+        void moveWater(int newLocationX, int newLocationY){
+            water->moveTexture(currentLocationX, currentLocationY,
+                                newLocationX, newLocationY);
+            currentLocationX = newLocationX;
+            currentLocationY = newLocationY;
+        }
+};
+
+
+int main() {
+    int width = 4;                                     //Finalmente, en el main se realiza un "mapa" de prueba.
+    int heigth = 4;                                    //Se "crea" una cuadrícula de 4x4, y se "rellena" con cada textura.
+                                                       //En este caso, se ha optado por rellenar cada celda de forma aleatoria con hierba o con colina.
+    TextureClient mapa[width*heigth];
+    int position = 0;
+  
+    for (int x = 0; x < width; x++){
+        for (int y = 0; y < heigth; y++){
+            if (rand() % 2 == 0){
+                mapa[position].moveGrass(x,y);
+                position++;
+            }else{
+                mapa[position].moveHill(x,y);
+                position++;   
+            }
+        }        
+    }
+    
+    return 0;
+}
